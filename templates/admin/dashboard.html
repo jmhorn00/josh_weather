@@ -1,0 +1,123 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .dash-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px 20px; }
+  .dash-card h3 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; color: #666; letter-spacing: .5px; }
+  .dash-card .big { font-size: 36px; font-weight: 700; line-height: 1.1; }
+  .dash-card .sub { font-size: 12px; color: #888; margin-top: 4px; }
+  .ok   { color: #28a745; }
+  .warn { color: #e67e22; }
+  .stale, .bad { color: #dc3545; }
+  .station-list { list-style: none; padding: 0; margin: 8px 0 0; }
+  .station-list li { padding: 4px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; display: flex; justify-content: space-between; }
+  .station-list li:last-child { border-bottom: none; }
+  .ttl { font-size: 11px; color: #28a745; }
+  .alert-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; }
+  .alert-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .section-title { font-size: 15px; font-weight: 600; margin: 24px 0 10px; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #d4edda; color: #155724; }
+  .badge-yellow { background: #fff3cd; color: #856404; }
+  .badge-red { background: #f8d7da; color: #721c24; }
+  .badge-gray { background: #e2e3e5; color: #383d41; }
+</style>
+
+<h2 style="margin-top:0;">System Dashboard</h2>
+
+{# ── Summary Cards ── #}
+<div class="dash-grid">
+
+  <div class="dash-card">
+    <h3>Active Stations</h3>
+    <div class="big {% if stats.active_count > 0 %}ok{% else %}bad{% endif %}">
+      {{ stats.active_count }}
+    </div>
+    <div class="sub">of 159 WSR-88D sites currently polling</div>
+  </div>
+
+  <div class="dash-card">
+    <h3>MRMS Mosaic</h3>
+    {% if stats.latest_mrms %}
+      <div class="big {{ stats.mrms_status }}">{{ stats.mrms_age_min }}m</div>
+      <div class="sub">
+        age of latest tile &nbsp;
+        {% if stats.mrms_status == 'ok' %}
+          <span class="badge badge-green">Fresh</span>
+        {% elif stats.mrms_status == 'warn' %}
+          <span class="badge badge-yellow">Delayed</span>
+        {% else %}
+          <span class="badge badge-red">Stale</span>
+        {% endif %}
+      </div>
+      <div class="sub" style="margin-top:4px;">{{ stats.latest_mrms.valid_time|date:"H:i:s" }} UTC · {{ stats.mrms_tile_count }} tiles cached</div>
+    {% else %}
+      <div class="big bad">—</div>
+      <div class="sub">No tiles yet — is Celery Beat running?</div>
+    {% endif %}
+  </div>
+
+  <div class="dash-card">
+    <h3>NWS Alerts</h3>
+    <div class="big {% if stats.total_alerts > 0 %}warn{% else %}ok{% endif %}">
+      {{ stats.total_alerts }}
+    </div>
+    <div class="sub">active nationwide</div>
+    {% if stats.alert_counts %}
+    <div style="margin-top:8px;">
+      {% for severity, count in stats.alert_counts.items %}
+      <div class="alert-row">
+        <span>{{ severity }}</span>
+        <strong>{{ count }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="dash-card">
+    <h3>Scan Processing</h3>
+    <div class="big {% if stats.unprocessed_scans > 10 %}warn{% else %}ok{% endif %}">
+      {{ stats.scans_last_hour }}
+    </div>
+    <div class="sub">scans ingested in last hour</div>
+    <div class="sub" style="margin-top:4px;">
+      {{ stats.unprocessed_scans }} pending &nbsp;·&nbsp;
+      {{ stats.station_tile_count }} tiles rendered
+    </div>
+  </div>
+
+</div>
+
+{# ── Active Stations Detail ── #}
+{% if stats.active_stations %}
+<div class="section-title">Currently Active Stations</div>
+<div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:16px 20px;">
+  <ul class="station-list">
+    {% for active in stats.active_stations %}
+    <li>
+      <span>
+        <strong>{{ active.station.code }}</strong>
+        &nbsp;—&nbsp;{{ active.station.name }}, {{ active.station.state }}
+      </span>
+      <span class="ttl">expires {{ active.expires_at|date:"H:i" }} UTC</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<div class="section-title">Active Stations</div>
+<p style="color:#888;font-size:13px;">No stations currently active. Users activate stations by selecting them on the map.</p>
+{% endif %}
+
+{# ── Quick Links ── #}
+<div class="section-title">Quick Links</div>
+<p style="font-size:13px;line-height:2;">
+  <a href="{% url 'admin:radar_radarstation_changelist' %}">All Stations</a> &nbsp;·&nbsp;
+  <a href="{% url 'admin:radar_activestation_changelist' %}">Active Stations</a> &nbsp;·&nbsp;
+  <a href="{% url 'admin:radar_mrmstile_changelist' %}">MRMS Tiles</a> &nbsp;·&nbsp;
+  <a href="{% url 'admin:radar_radarscan_changelist' %}">Radar Scans</a> &nbsp;·&nbsp;
+  <a href="{% url 'admin:radar_nwsalert_changelist' %}">NWS Alerts</a> &nbsp;·&nbsp;
+  <a href="{% url 'admin:radar_hailreport_changelist' %}">Hail Reports</a>
+</p>
+{% endblock %}

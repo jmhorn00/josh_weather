@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from apps.radar.admin import admin_site
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin_site.urls),
     path('', include('apps.core.urls')),
     path('api/radar/', include('apps.radar.urls')),
 ]
