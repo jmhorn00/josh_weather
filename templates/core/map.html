@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}WxRadar — Live National Weather Radar{% endblock %}
+
+{% block content %}
+<div id="app">
+    <!-- Top Bar -->
+    <div id="topbar">
+        <span id="brand">⚡ WxRadar</span>
+        <div id="search-container">
+            <input type="text" id="station-search" placeholder="Search city or radar station..." autocomplete="off">
+            <div id="search-results" class="hidden"></div>
+        </div>
+        <button id="btn-geolocate" title="Use my location">📍</button>
+    </div>
+
+    <!-- Main Layout -->
+    <div id="main-layout">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div id="sidebar-header">
+                <button id="btn-national" onclick="returnToNational()">↩ National View</button>
+            </div>
+
+            <div id="recently-viewed" class="sidebar-section">
+                <h4>Recently Viewed</h4>
+                <ul id="recent-list"></ul>
+            </div>
+
+            <div id="browse-section" class="sidebar-section">
+                <button id="btn-browse" onclick="toggleBrowseAll()">Browse All 159 Sites ▾</button>
+                <div id="browse-all" class="hidden"></div>
+            </div>
+
+            <div id="active-station-info" class="hidden sidebar-section">
+                <h4 id="active-station-name"></h4>
+                <div id="station-loading" class="hidden">Loading radar data...</div>
+                <div id="station-ready"></div>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div id="bottombar">
+        <div id="product-switcher">
+            <button class="product-btn active" onclick="switchProduct('reflectivity')">Reflectivity</button>
+            <button class="product-btn" onclick="switchProduct('velocity')">Velocity</button>
+            <button class="product-btn" onclick="switchProduct('mesh')">MESH</button>
+            <button class="product-btn" onclick="switchProduct('nowcast_00')">Nowcast</button>
+        </div>
+        <div id="time-display"></div>
+        <div id="alerts-badge" onclick="showAlerts()">⚠ Loading alerts...</div>
+    </div>
+</div>
+
+<script>
+    const STATIC_URL = "{% static '' %}";
+    const API_BASE = "/api/radar";
+</script>
+<script src="{% static 'js/radar_map.js' %}"></script>
+<script src="{% static 'js/station_selector.js' %}"></script>
+<script src="{% static 'js/alerts.js' %}"></script>
+<script src="{% static 'js/radar_animate.js' %}"></script>
+{% endblock %}
