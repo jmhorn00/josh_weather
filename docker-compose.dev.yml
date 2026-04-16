@@ -1,29 +1,14 @@
 version: "3.9"
 
-# Development override — mirrors prod with hot-reload and debug enabled.
-# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Development infrastructure — run Django locally via VSCode (launch.json).
+# Provides only backing services: db, Redis, and optional Celery worker/beat.
+#
+# Start just the infrastructure:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up db redis
+#
+# Then launch Django from VSCode: Run > Django: Debug Server
 
 services:
-  web:
-    build:
-      context: .
-      target: builder       # Use builder stage with all dev deps installed
-    command: python manage.py runserver 0.0.0.0:8000
-    env_file: .env
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.development
-      - DEBUG=True
-    volumes:
-      - .:/app                   # Live code reload
-      - tile_data:/app/data/tiles
-      - scan_data:/app/data/scans
-      - mrms_data:/app/data/mrms
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - redis
-
   worker:
     build:
       context: .

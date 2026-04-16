@@ -1,0 +1,62 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Django: Debug Server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "args": ["runserver", "--noreload"],
+            "django": true,
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings.development"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Django: Run Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["apps/", "-v"],
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings.development"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Django: Management Command",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "args": ["${input:managementCommand}"],
+            "django": true,
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings.development"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "managementCommand",
+            "type": "pickString",
+            "description": "Management command to run",
+            "options": [
+                "migrate",
+                "seed_stations",
+                "backfill_scans",
+                "rebuild_tiles",
+                "test_mrms",
+                "collectstatic --noinput",
+                "shell"
+            ]
+        }
+    ]
+}

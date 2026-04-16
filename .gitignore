@@ -46,7 +46,8 @@ ENV/
 
 # IDE
 .idea/
-.vscode/
+.vscode/settings.json
+.vscode/extensions.json
 *.swp
 *.swo
 .DS_Store
