@@ -34,35 +34,47 @@ REF_NORM = mcolors.BoundaryNorm(REFLECTIVITY_LEVELS, REF_CMAP.N)
 
 def _decompress_grib(file_path):
     """Decompress .grib2.gz to a temporary .grib2 file. Returns temp file path."""
-    tmp = tempfile.NamedTemporaryFile(suffix='.grib2', delete=False)
-    tmp.close()
-    with gzip.open(file_path, 'rb') as f_in:
-        with open(tmp.name, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-    return tmp.name
+    # Use delete=False so the temp file can be reopened on Windows.
+    # Caller is responsible for unlinking after use.
+    fd, tmp_path = tempfile.mkstemp(suffix='.grib2')
+    try:
+        with os.fdopen(fd, 'wb') as f_out:
+            with gzip.open(file_path, 'rb') as f_in:
+                shutil.copyfileobj(f_in, f_out)
+    except Exception:
+        os.unlink(tmp_path)
+        raise
+    return tmp_path
 
 
 def parse_mrms_grib(file_path):
     """
     Parse an MRMS grib2.gz file and return an xarray Dataset.
     Decompresses .gz if needed before opening with cfgrib.
+    Data is eagerly loaded into memory so the underlying file handle is
+    released before the temp file is deleted — required on Windows.
     """
     if file_path.endswith('.gz'):
         tmp_path = _decompress_grib(file_path)
         try:
-            ds = xr.open_dataset(
+            with xr.open_dataset(
                 tmp_path,
                 engine='cfgrib',
                 backend_kwargs={'indexpath': ''},
-            )
+            ) as raw_ds:
+                ds = raw_ds.load()  # pull all data into RAM; releases file lock
         finally:
-            os.unlink(tmp_path)
+            try:
+                os.unlink(tmp_path)
+            except OSError as exc:
+                logger.warning('Could not delete temp grib2 file %s: %s', tmp_path, exc)
     else:
-        ds = xr.open_dataset(
+        with xr.open_dataset(
             file_path,
             engine='cfgrib',
             backend_kwargs={'indexpath': ''},
-        )
+        ) as raw_ds:
+            ds = raw_ds.load()
     return ds
 
 
@@ -129,7 +141,8 @@ def render_mrms_precip_type(ds, output_path):
     if data.ndim == 3:
         data = data[0]
 
-    cmap = plt.cm.get_cmap('tab20', 20)
+    # plt.cm.get_cmap() removed in matplotlib 3.9 — use colormaps registry
+    cmap = matplotlib.colormaps.get_cmap('tab20').resampled(20)
     norm = mcolors.BoundaryNorm(range(21), cmap.N)
     return _render_png(data, cmap, norm, output_path, bounds)
 

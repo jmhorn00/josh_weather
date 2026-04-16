@@ -1,8 +1,8 @@
-import json
 import logging
 import math
 import os
 from datetime import timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.http import JsonResponse, FileResponse, Http404
@@ -249,12 +249,18 @@ def alerts_geojson(request):
 # ── Tile Serving ──────────────────────────────────────────────────────────────
 
 def serve_tile(request, tile_path):
-    full_path = os.path.join(settings.TILE_OUTPUT_DIR, tile_path)
-    if not os.path.exists(full_path):
-        raise Http404('Tile not found')
-    # Security: prevent path traversal
-    real_path = os.path.realpath(full_path)
-    real_base = os.path.realpath(settings.TILE_OUTPUT_DIR)
-    if not real_path.startswith(real_base + os.sep):
+    # Normalise separators: tile_path comes from the URL (always forward-slash)
+    # but settings.TILE_OUTPUT_DIR may use the OS separator on Windows.
+    # pathlib handles both transparently.
+    base = Path(settings.TILE_OUTPUT_DIR).resolve()
+    # Prevent absolute paths injected via the URL (e.g. /etc/passwd)
+    full = (base / tile_path).resolve()
+
+    # Path-traversal guard — is_relative_to() is safe on both Windows and Linux
+    if not full.is_relative_to(base):
         raise Http404('Invalid tile path')
-    return FileResponse(open(real_path, 'rb'), content_type='image/png')
+
+    if not full.exists():
+        raise Http404('Tile not found')
+
+    return FileResponse(full.open('rb'), content_type='image/png')

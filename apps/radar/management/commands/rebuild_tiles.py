@@ -62,7 +62,7 @@ class Command(BaseCommand):
                 RadarTile.objects.update_or_create(
                     scan=scan, product='reflectivity',
                     defaults={'valid_time': scan.scan_time,
-                              'tile_path': os.path.join(code, ref_filename),
+                              'tile_path': f'{code}/{ref_filename}',
                               'bounds_json': ref_bounds},
                 )
 
@@ -72,7 +72,7 @@ class Command(BaseCommand):
                 RadarTile.objects.update_or_create(
                     scan=scan, product='velocity',
                     defaults={'valid_time': scan.scan_time,
-                              'tile_path': os.path.join(code, vel_filename),
+                              'tile_path': f'{code}/{vel_filename}',
                               'bounds_json': vel_bounds},
                 )
                 self.stdout.write(f'    Done')

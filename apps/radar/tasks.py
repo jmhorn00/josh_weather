@@ -56,16 +56,18 @@ def poll_mrms_mosaic(self):
             valid_time = timezone.now()
 
         tile_filename = f"mrms_reflectivity_{valid_time.strftime('%Y%m%d_%H%M%S')}.png"
-        tile_path = os.path.join(settings.TILE_OUTPUT_DIR, 'mrms', tile_filename)
-        os.makedirs(os.path.dirname(tile_path), exist_ok=True)
+        # Use os.path.join only for filesystem access; store DB paths with
+        # forward slashes so they are valid URL segments on all platforms.
+        tile_fs_path = os.path.join(settings.TILE_OUTPUT_DIR, 'mrms', tile_filename)
+        os.makedirs(os.path.dirname(tile_fs_path), exist_ok=True)
 
-        _, bounds = render_mrms_reflectivity(ds, tile_path)
+        _, bounds = render_mrms_reflectivity(ds, tile_fs_path)
 
         tile = MRMSTile.objects.create(
             product='reflectivity',
             valid_time=valid_time,
             s3_key=s3_key,
-            tile_path=os.path.join('mrms', tile_filename),
+            tile_path=f'mrms/{tile_filename}',
             bounds_json=bounds,
             processed=True,
         )
@@ -206,7 +208,7 @@ def process_nexrad_scan(self, station_code, s3_key):
             scan=scan, product='reflectivity',
             defaults={
                 'valid_time': scan.scan_time,
-                'tile_path': os.path.join(station_code, ref_filename),
+                'tile_path': f'{station_code}/{ref_filename}',
                 'bounds_json': ref_bounds,
             },
         )
@@ -218,7 +220,7 @@ def process_nexrad_scan(self, station_code, s3_key):
             scan=scan, product='velocity',
             defaults={
                 'valid_time': scan.scan_time,
-                'tile_path': os.path.join(station_code, vel_filename),
+                'tile_path': f'{station_code}/{vel_filename}',
                 'bounds_json': vel_bounds,
             },
         )
@@ -311,7 +313,7 @@ def generate_nowcast(self, station_code):
                 scan=latest_scan, product=product,
                 defaults={
                     'valid_time': valid_time,
-                    'tile_path': os.path.join(station_code, filename),
+                    'tile_path': f'{station_code}/{filename}',
                     'bounds_json': bounds,
                 },
             )
