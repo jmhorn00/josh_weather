@@ -2,6 +2,9 @@
 MRMS grib2 parsing and CONUS tile rendering.
 Files are gzip-compressed grib2, read with cfgrib engine via xarray.
 Bounds are always read from grib2 metadata, never hardcoded.
+
+cfgrib / eccodes have no Windows wheels. On Windows, install
+requirements/windows-dev.txt and run MRMS tasks inside Docker.
 """
 import gzip
 import logging
@@ -14,7 +17,17 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
-import xarray as xr
+
+try:
+    import xarray as xr
+    _XARRAY_CFGRIB_OK = True
+except ImportError as _xr_err:  # pragma: no cover
+    xr = None  # type: ignore[assignment]
+    _XARRAY_CFGRIB_OK = False
+    logging.getLogger(__name__).warning(
+        'xarray not available (%s). MRMS parsing unavailable on this platform.',
+        _xr_err,
+    )
 
 logger = logging.getLogger(__name__)
 

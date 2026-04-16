@@ -1,10 +1,22 @@
 """
 Py-ART NEXRAD Level 2 processing: load, dealias velocity, grid to Cartesian.
+
+arm-pyart has no Windows / Python 3.14 wheels. On Windows, install
+requirements/windows-dev.txt and run radar processing inside Docker.
 """
 import logging
 
-import pyart
 import numpy as np
+
+try:
+    import pyart
+except ImportError as _pyart_err:  # pragma: no cover
+    pyart = None  # type: ignore[assignment]
+    logging.getLogger(__name__).warning(
+        'arm-pyart not installed (%s). '
+        'Radar processing unavailable — use Docker on Linux for full pipeline.',
+        _pyart_err,
+    )
 
 logger = logging.getLogger(__name__)
 

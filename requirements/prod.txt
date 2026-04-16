@@ -1,2 +1,7 @@
 -r base.txt
-sentry-sdk[django]
+
+# Production WSGI server (Linux/Docker only)
+gunicorn>=22.0,<24.0
+
+# Error tracking
+sentry-sdk[django]>=2.3,<3.0

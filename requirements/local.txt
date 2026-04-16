@@ -1,0 +1,49 @@
+# Local development — Windows and macOS.
+#
+# Packages that require native C libraries with no Windows wheels are marked
+# with ; sys_platform != 'win32' so pip skips them automatically on Windows.
+# macOS (darwin) gets the full scientific stack.
+#
+# Install:
+#   pip install -r requirements/local.txt
+#
+# No Redis, Docker, or Celery worker needed for basic local dev.
+# Development settings use in-memory cache and eager task execution.
+
+# ── Django core ────────────────────────────────────────────────────────────────
+django>=5.1,<6.0
+django-environ>=0.11,<1.0
+django-celery-beat>=2.6,<3.0
+psycopg2-binary>=2.9.9,<3.0
+whitenoise[brotli]>=6.7,<7.0
+
+# ── Task queue ─────────────────────────────────────────────────────────────────
+celery[redis]>=5.4,<6.0
+redis>=5.0,<6.0
+
+# ── AWS ────────────────────────────────────────────────────────────────────────
+boto3>=1.34,<2.0
+botocore>=1.34,<2.0
+
+# ── Scientific stack (wheels available on Windows, macOS, Linux) ───────────────
+numpy>=2.0,<3.0
+scipy>=1.13,<2.0
+matplotlib>=3.9,<4.0
+Pillow>=10.4,<12.0
+xarray>=2024.6,<2026.0
+metpy>=1.6,<2.0
+
+# ── Radar processing (macOS/Linux only — no Windows wheels) ───────────────────
+# These are skipped automatically on Windows; the app loads without them and
+# radar processing tasks will log a warning instead of crashing.
+arm-pyart>=2.0,<3.0; sys_platform != 'win32'
+pyhail>=0.3,<1.0; sys_platform != 'win32'
+pysteps>=1.8,<2.0; sys_platform != 'win32'
+cfgrib>=0.9.14,<1.0; sys_platform != 'win32'
+eccodes>=1.6,<2.0; sys_platform != 'win32'
+
+# ── Dev tools ─────────────────────────────────────────────────────────────────
+django-debug-toolbar>=4.3,<5.0
+ipython>=8.24,<9.0
+pytest-django>=4.8,<5.0
+factory-boy>=3.3,<4.0

@@ -6,18 +6,71 @@ Live national weather radar for the United States. Station-centric UX built on D
 - **Station view** — NEXRAD Level 2 reflectivity, dealiased velocity, MESH hail, 60-min nowcast
 - **NWS alerts** — active watches/warnings/advisories nationwide, always on top
 
-## Quick Start
+## Local Development (Windows or macOS)
+
+No Docker, no Redis, no Celery worker needed for basic development.
 
 ```bash
-git clone https://github.com/jmhorn00/josh_weather.git && cd josh_weather
-cp .env.example .env          # fill in SECRET_KEY, DATABASE_URL, REDIS_URL
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-# in a second terminal:
-docker compose run --rm web python manage.py migrate
-docker compose run --rm web python manage.py seed_stations
+git clone https://github.com/jmhorn00/josh_weather.git
+cd josh_weather
+
+# Create and activate a virtual environment
+python -m venv .venv
+
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+source .venv/bin/activate
+
+# Install dependencies (platform markers handle Windows vs macOS automatically)
+pip install -r requirements/local.txt
+
+# Configure environment
+copy .env.example .env        # Windows
+cp .env.example .env          # macOS / Linux
+# Edit .env and set a SECRET_KEY (anything works for local dev)
+
+# Set up the database and seed stations
+python manage.py migrate
+python manage.py seed_stations
+
+# Start the dev server
+python manage.py runserver
 ```
 
-Open `http://localhost:8000`.
+Open `http://127.0.0.1:8000`.
+
+> **Windows note:** Radar processing tasks (NEXRAD Level 2, hail detection, nowcasting)
+> require packages with no Windows wheels. Those features log a warning and return
+> empty results on Windows. All other features work normally. Run the Docker stack
+> for the full pipeline.
+
+## Production (Docker)
+
+```bash
+cp .env.example .env   # fill in all production values
+docker compose up -d
+docker compose run --rm web python manage.py migrate
+docker compose run --rm web python manage.py seed_stations
+docker compose run --rm web python manage.py collectstatic --noinput
+```
+
+## Common Commands
+
+| Task | Command |
+|------|---------|
+| Run dev server | `python manage.py runserver` |
+| Apply migrations | `python manage.py migrate` |
+| Seed radar stations | `python manage.py seed_stations` |
+| Open Django shell | `python manage.py shell` |
+| Run tests | `python -m pytest apps/` |
+| Smoke test MRMS | `python manage.py test_mrms` |
+| Backfill scans | `python manage.py backfill_scans` |
+| Rebuild tiles | `python manage.py rebuild_tiles` |
+| Collect static files | `python manage.py collectstatic` |
+| Start Celery worker (Linux/macOS) | `celery -A config worker -l DEBUG` |
+| Start Celery worker (Windows) | `celery -A config worker -l DEBUG -P solo` |
+| Start Celery beat | `celery -A config beat -l DEBUG` |
 
 ## Stack
 
@@ -25,7 +78,7 @@ Open `http://localhost:8000`.
 |-------|-----------|
 | Framework | Django 5.x |
 | Task queue | Celery 5 + Redis |
-| Database | PostgreSQL 16 |
+| Database | PostgreSQL 16 (SQLite for local dev) |
 | National mosaic | MRMS — `s3://noaa-mrms-pds/` |
 | Station radar | NEXRAD Level 2 — `s3://noaa-nexrad-level2/` |
 | Radar processing | Py-ART, MetPy, xarray, cfgrib |
@@ -63,23 +116,10 @@ apps/radar/      Models, views, tasks, services, admin, management commands
 templates/       Django templates (map + admin dashboard)
 static/          CSS + JS (no build step)
 docs/            Documentation
-requirements/    base / dev / prod pip requirements
+requirements/    local / base / prod pip requirements
 Dockerfile       Multi-stage build
 docker-compose.yml          Production stack
 docker-compose.dev.yml      Dev overrides (hot reload, debug)
-Makefile         Common shortcuts
-```
-
-## Make Targets
-
-```bash
-make up           # Start dev stack
-make migrate      # Apply migrations
-make seed         # Seed 159 radar stations from NWS API
-make test-mrms    # Smoke test MRMS → cfgrib pipeline
-make logs         # Tail all service logs
-make shell        # Django shell
-make down         # Stop everything
 ```
 
 ## Data Sources

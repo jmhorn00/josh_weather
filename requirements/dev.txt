@@ -1,5 +1,8 @@
+# Linux / Docker local development — full scientific stack included.
+# Windows developers: use requirements/windows-dev.txt instead.
 -r base.txt
-django-debug-toolbar
-ipython
-pytest-django
-factory-boy
+
+django-debug-toolbar>=4.3,<5.0
+ipython>=8.24,<9.0
+pytest-django>=4.8,<5.0
+factory-boy>=3.3,<4.0
