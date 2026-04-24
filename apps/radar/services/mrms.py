@@ -20,12 +20,13 @@ import numpy as np
 
 try:
     import xarray as xr
+    import cfgrib  # noqa: F401 — verify cfgrib backend is present
     _XARRAY_CFGRIB_OK = True
 except ImportError as _xr_err:  # pragma: no cover
     xr = None  # type: ignore[assignment]
     _XARRAY_CFGRIB_OK = False
     logging.getLogger(__name__).warning(
-        'xarray not available (%s). MRMS parsing unavailable on this platform.',
+        'cfgrib/xarray not available (%s). MRMS parsing unavailable on this platform.',
         _xr_err,
     )
 

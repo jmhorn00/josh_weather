@@ -41,6 +41,39 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Celery: Worker",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "args": ["-A", "config", "worker", "-l", "DEBUG"],
+            "windows": {
+                "args": ["-A", "config", "worker", "-l", "DEBUG", "-P", "solo"]
+            },
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings.development"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Celery: Beat",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "args": [
+                "-A", "config", "beat",
+                "-l", "DEBUG",
+                "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"
+            ],
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings.development"
+            },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ],
     "inputs": [

@@ -23,6 +23,11 @@ def poll_mrms_mosaic(self):
     Keeps last 60 minutes of tiles (30 frames). Deletes older records + files.
     """
     try:
+        from .services.mrms import _XARRAY_CFGRIB_OK
+        if not _XARRAY_CFGRIB_OK:
+            logger.debug('poll_mrms_mosaic: cfgrib not available on this platform, skipping')
+            return
+
         from .services.s3 import get_latest_mrms_key, download_mrms
         from .services.mrms import parse_mrms_grib, render_mrms_reflectivity
         from .models import MRMSTile
@@ -162,6 +167,11 @@ def process_nexrad_scan(self, station_code, s3_key):
     import os
 
     try:
+        from .services import processor as _proc
+        if _proc.pyart is None:
+            logger.debug('process_nexrad_scan: arm-pyart not available on this platform, skipping %s', s3_key)
+            return
+
         station = RadarStation.objects.get(code=station_code)
 
         # Idempotency check
@@ -273,6 +283,11 @@ def generate_nowcast(self, station_code):
     import numpy as np
 
     try:
+        from .services import processor as _proc
+        if _proc.pyart is None:
+            logger.debug('generate_nowcast: arm-pyart not available on this platform, skipping %s', station_code)
+            return
+
         station = RadarStation.objects.get(code=station_code)
         scans = RadarScan.objects.filter(
             station=station, processed=True

@@ -1,0 +1,7 @@
+# Windows development — delegates to local.txt.
+# local.txt uses sys_platform != 'win32' markers to skip packages
+# with no Windows wheels (arm-pyart, pyhail, pysteps, cfgrib, eccodes).
+#
+# Install:
+#   pip install -r requirements/windows-dev.txt
+-r local.txt

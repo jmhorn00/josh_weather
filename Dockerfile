@@ -39,7 +39,8 @@ ENV DJANGO_SETTINGS_MODULE=config.settings.production
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-RUN python manage.py collectstatic --noinput
+ARG SECRET_KEY=django-insecure-build-placeholder-only
+RUN SECRET_KEY=$SECRET_KEY python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
